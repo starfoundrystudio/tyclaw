@@ -1,6 +1,6 @@
 {
   "name": "@starfoundrystudio/tyclaw",
-  "version": "2026.3.2",
+  "version": "2026.3.1",
   "description": "Multi-channel AI gateway with extensible messaging integrations",
   "keywords": [],
   "homepage": "https://github.com/starfoundrystudio/tyclaw#readme",
@@ -12,9 +12,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/starfoundrystudio/tyclaw.git"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
   },
   "bin": {
     "openclaw": "openclaw.mjs"
@@ -48,6 +45,9 @@
       "default": "./dist/plugin-sdk/account-id.js"
     },
     "./cli-entry": "./openclaw.mjs"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
     "android:assemble": "cd apps/android && ./gradlew :app:assembleDebug",
@@ -124,8 +124,8 @@
     "protocol:check": "pnpm protocol:gen && pnpm protocol:gen:swift && git diff --exit-code -- dist/protocol.schema.json apps/macos/Sources/OpenClawProtocol/GatewayModels.swift",
     "protocol:gen": "node --import tsx scripts/protocol-gen.ts",
     "protocol:gen:swift": "node --import tsx scripts/protocol-gen-swift.ts",
-    "release:check": "node --import tsx scripts/release-check.ts",
     "release": "node scripts/release.mjs",
+    "release:check": "node --import tsx scripts/release-check.ts",
     "release:dry-run": "node scripts/release.mjs --dry-run",
     "start": "node scripts/run-node.mjs",
     "test": "node scripts/test-parallel.mjs",

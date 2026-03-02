@@ -13,11 +13,11 @@
  * If today's version already exists as a tag, appends -N (e.g. 2026.3.2-1).
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
 import { execSync } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, "..");
@@ -66,11 +66,15 @@ function nextCalver() {
   const base = todayCalver();
   const tags = existingTags();
 
-  if (!tags.includes(`v${base}`)) return base;
+  if (!tags.includes(`v${base}`)) {
+    return base;
+  }
 
   // Today's version already tagged — find next suffix
   let n = 1;
-  while (tags.includes(`v${base}-${n}`)) n++;
+  while (tags.includes(`v${base}-${n}`)) {
+    n++;
+  }
   return `${base}-${n}`;
 }
 
@@ -97,8 +101,12 @@ try {
 try {
   const status = run("git status --porcelain");
   if (status) {
-    console.error(red("Working tree is dirty. Commit or stash changes before releasing."));
-    if (!dryRun) process.exit(1);
+    if (dryRun) {
+      console.warn(yellow("Warning: Working tree is dirty (ignored for dry run)."));
+    } else {
+      console.error(red("Working tree is dirty. Commit or stash changes before releasing."));
+      process.exit(1);
+    }
   }
 } catch {
   // git unavailable
@@ -108,6 +116,8 @@ try {
 
 if (dryRun) {
   console.log(bold(`\nDry run: ${pkg.name} v${currentVersion} \u2192 v${newVersion}\n`));
+
+  let dryRunFailed = false;
 
   // Build
   console.log(bold("Build:"));
@@ -119,13 +129,33 @@ if (dryRun) {
     process.exit(1);
   }
 
-  // Release check (upstream validation)
-  console.log(bold("\nRelease check:"));
+  // Sync plugin versions, validate release check, then restore changes
+  console.log(bold("\nPlugin sync + release check:"));
   try {
-    execSync("pnpm release:check", { cwd: rootDir, stdio: "inherit" });
-    console.log(green("  \u2713 Release check passed"));
+    execSync("pnpm plugins:sync", { cwd: rootDir, stdio: "inherit" });
+    console.log(green("  \u2713 Plugin versions synced"));
+
+    try {
+      execSync("pnpm release:check", { cwd: rootDir, stdio: "inherit" });
+      console.log(green("  \u2713 Release check passed"));
+    } catch {
+      console.error(red("Release check failed."));
+      dryRunFailed = true;
+    }
   } catch {
-    console.error(red("Release check failed."));
+    console.error(red("Plugin sync failed."));
+    dryRunFailed = true;
+  } finally {
+    // Restore plugin files so dry run is side-effect-free
+    try {
+      execSync("git checkout -- extensions/", { cwd: rootDir });
+      console.log(dim("  (restored extensions/ to pre-sync state)"));
+    } catch {
+      console.warn(yellow("  Warning: could not restore extensions/ — check git status"));
+    }
+  }
+
+  if (dryRunFailed) {
     process.exit(1);
   }
 
@@ -147,7 +177,9 @@ if (dryRun) {
   dryLog(`git tag v${newVersion}`);
   dryLog("git push && git push --tags");
 
-  console.log(green(`\n\u2713 Dry run complete \u2014 all checks passed. Ready to release v${newVersion}.\n`));
+  console.log(
+    green(`\n\u2713 Dry run complete \u2014 all checks passed. Ready to release v${newVersion}.\n`),
+  );
   process.exit(0);
 }
 
@@ -155,59 +187,54 @@ if (dryRun) {
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 
-rl.question(
-  `Release ${pkg.name} v${currentVersion} \u2192 v${newVersion}? (Y/n) `,
-  (answer) => {
-    rl.close();
+rl.question(`Release ${pkg.name} v${currentVersion} \u2192 v${newVersion}? (Y/n) `, (answer) => {
+  rl.close();
 
-    if (answer && answer.toLowerCase() !== "y") {
-      console.log("Release cancelled.");
-      process.exit(0);
-    }
+  if (answer && answer.toLowerCase() !== "y") {
+    console.log("Release cancelled.");
+    process.exit(0);
+  }
 
-    // 1. Update package.json version
-    try {
-      pkg.version = newVersion;
-      writeFileSync(
-        join(rootDir, "package.json"),
-        JSON.stringify(pkg, null, 2) + "\n",
-        "utf-8",
-      );
-      console.log(`Updated package.json version: ${currentVersion} \u2192 ${newVersion}`);
-    } catch (err) {
-      console.error(red("Failed to update package.json:"), err.message);
-      process.exit(1);
-    }
+  // 1. Update package.json version
+  try {
+    pkg.version = newVersion;
+    writeFileSync(join(rootDir, "package.json"), JSON.stringify(pkg, null, 2) + "\n", "utf-8");
+    console.log(`Updated package.json version: ${currentVersion} \u2192 ${newVersion}`);
+  } catch (err) {
+    console.error(red("Failed to update package.json:"), err.message);
+    process.exit(1);
+  }
 
-    // 2. Sync plugin versions
-    try {
-      console.log("Syncing plugin versions...");
-      execSync("pnpm plugins:sync", { cwd: rootDir, stdio: "inherit" });
-      console.log(green("  \u2713 Plugin versions synced"));
-    } catch (err) {
-      console.error(red("Plugin sync failed:"), err.message);
-      process.exit(1);
-    }
+  // 2. Sync plugin versions
+  try {
+    console.log("Syncing plugin versions...");
+    execSync("pnpm plugins:sync", { cwd: rootDir, stdio: "inherit" });
+    console.log(green("  \u2713 Plugin versions synced"));
+  } catch (err) {
+    console.error(red("Plugin sync failed:"), err.message);
+    process.exit(1);
+  }
 
-    // 3. Commit and tag
-    try {
-      execSync("git add package.json extensions/", { cwd: rootDir });
-      execSync(`git commit -m "${newVersion}"`, { cwd: rootDir, stdio: "inherit" });
-      execSync(`git tag v${newVersion}`, { cwd: rootDir });
-      console.log(green(`  \u2713 Tagged v${newVersion}`));
-    } catch (err) {
-      console.error(red("Commit/tag failed:"), err.message);
-      process.exit(1);
-    }
+  // 3. Commit and tag
+  try {
+    execSync("git add package.json extensions/", { cwd: rootDir });
+    execSync(`git commit -m "${newVersion}"`, { cwd: rootDir, stdio: "inherit" });
+    execSync(`git tag v${newVersion}`, { cwd: rootDir });
+    console.log(green(`  \u2713 Tagged v${newVersion}`));
+  } catch (err) {
+    console.error(red("Commit/tag failed:"), err.message);
+    process.exit(1);
+  }
 
-    // 4. Push
-    try {
-      execSync("git push && git push --tags", { cwd: rootDir, stdio: "inherit" });
-    } catch (err) {
-      console.error(red("Push failed:"), err.message);
-      process.exit(1);
-    }
+  // 4. Push
+  try {
+    execSync("git push && git push --tags", { cwd: rootDir, stdio: "inherit" });
+  } catch (err) {
+    console.error(red("Push failed:"), err.message);
+    process.exit(1);
+  }
 
-    console.log(green(`\n\u2713 Released v${newVersion} \u2014 CI will publish to GitHub Packages.\n`));
-  },
-);
+  console.log(
+    green(`\n\u2713 Released v${newVersion} \u2014 CI will publish to GitHub Packages.\n`),
+  );
+});
