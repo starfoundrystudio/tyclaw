@@ -89,6 +89,51 @@ Upgrading? [Updating guide](https://docs.openclaw.ai/install/updating) (and run 
 Switch channels (git + npm): `openclaw update --channel stable|beta|dev`.
 Details: [Development channels](https://docs.openclaw.ai/install/development-channels).
 
+## TeamYou fork — syncing with upstream
+
+This repo is a fork of [OpenClaw](https://github.com/openclaw/openclaw) customized for the TeamYou application. We maintain an `upstream-main` branch as a pristine mirror of the upstream repo, and do all TeamYou-specific work on `main`.
+
+### Initial setup (already done)
+
+```bash
+git remote add upstream git@github.com:openclaw/openclaw.git
+git fetch upstream
+git checkout -b upstream-main upstream/main
+git config rerere.enabled true   # remember conflict resolutions
+git checkout main
+```
+
+### Syncing upstream changes
+
+```bash
+# 1. Update the pristine mirror
+git fetch upstream
+git checkout upstream-main
+git merge --ff-only upstream/main
+
+# 2. Review what changed
+git log main..upstream-main --oneline
+
+# 3a. Cherry-pick specific commits (preferred for targeted updates)
+git checkout main
+git cherry-pick <commit-hash>
+
+# 3b. Or selective merge for larger batches
+git checkout main
+git merge upstream-main --no-commit   # inspect before committing
+# resolve any conflicts in TEAMYOU-marked blocks, then commit
+
+# 4. Verify
+pnpm install && pnpm build && pnpm test
+```
+
+### Rules of thumb
+
+- **Never commit TeamYou changes to `upstream-main`** — keep it a clean mirror.
+- **Cherry-pick over wholesale merge** — gives you control over what comes in and when.
+- **`git rerere` is enabled** — Git remembers how you resolved conflicts and auto-applies the same resolution next time.
+- **Check `TEAMYOU_CUSTOMIZATIONS.md`** — lists every upstream file we've modified. When upstream touches a file in that list, review carefully.
+
 ## From source (development)
 
 Prefer `pnpm` for builds from source. Bun is optional for running TypeScript directly.
