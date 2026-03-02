@@ -51,9 +51,20 @@ Model note: while any model is supported, I strongly recommend **Anthropic Pro/M
 
 Runtime: **Node ≥22**.
 
+This package is published to **GitHub Packages** (private registry). Configure your npm/pnpm client once:
+
 ```bash
-npm install -g openclaw@latest
-# or: pnpm add -g openclaw@latest
+# Add to your ~/.npmrc (or project .npmrc)
+@starfoundrystudio:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
+```
+
+The token needs the `read:packages` scope. Then install:
+
+```bash
+pnpm install -g @starfoundrystudio/tyclaw@latest
+# or a specific version:
+pnpm install -g @starfoundrystudio/tyclaw@2026.3.2
 
 openclaw onboard --install-daemon
 ```
@@ -133,6 +144,21 @@ pnpm install && pnpm build && pnpm test
 - **Cherry-pick over wholesale merge** — gives you control over what comes in and when.
 - **`git rerere` is enabled** — Git remembers how you resolved conflicts and auto-applies the same resolution next time.
 - **Check `TEAMYOU_CUSTOMIZATIONS.md`** — lists every upstream file we've modified. When upstream touches a file in that list, review carefully.
+
+### Releasing a new version
+
+We publish to GitHub Packages under `@starfoundrystudio/tyclaw`. The release uses calendar versioning (YYYY.M.D).
+
+```bash
+# Preview what will happen (runs build, release-check, tests)
+pnpm release:dry-run
+
+# Cut a release (prompts for confirmation, tags, and pushes)
+pnpm release              # auto-picks today's date as version
+pnpm release 2026.3.15    # explicit version
+```
+
+Pushing a `v*` tag triggers the [publish workflow](.github/workflows/publish.yml), which builds and publishes to GitHub Packages automatically.
 
 ## From source (development)
 
