@@ -4,13 +4,14 @@ Merge checklist: when syncing upstream, review any file listed here carefully.
 
 ## Upstream files modified
 
-| File                           | What changed                                                                         | Why                                                       |
-| ------------------------------ | ------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| `package.json`                 | `name`, `repository`, `homepage`, `bugs`, `author`, `publishConfig`, release scripts | Publish as `@starfoundrystudio/tyclaw` to GitHub Packages |
-| `README.md`                    | Added fork sync section, release instructions, updated install section               | TeamYou-specific docs                                     |
-| `src/infra/openclaw-root.ts`   | Added `@starfoundrystudio/tyclaw` to `CORE_PACKAGE_NAMES`                            | Package root resolution requires our scoped name          |
-| `src/infra/update-runner.ts`   | Added `@starfoundrystudio/tyclaw` to `CORE_PACKAGE_NAMES`                            | Same — update runner uses its own copy of the set         |
-| `src/cli/update-cli/shared.ts` | Added `@starfoundrystudio/tyclaw` to `CORE_PACKAGE_NAMES`                            | Same — CLI update logic uses its own copy of the set      |
+| File                             | What changed                                                                         | Why                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `package.json`                   | `name`, `repository`, `homepage`, `bugs`, `author`, `publishConfig`, release scripts | Publish as `@starfoundrystudio/tyclaw` to GitHub Packages  |
+| `README.md`                      | Added fork sync section, release instructions, updated install section               | TeamYou-specific docs                                      |
+| `src/infra/openclaw-root.ts`     | Added `@starfoundrystudio/tyclaw` to `CORE_PACKAGE_NAMES`                            | Package root resolution requires our scoped name           |
+| `src/infra/update-runner.ts`     | Added `@starfoundrystudio/tyclaw` to `CORE_PACKAGE_NAMES`                            | Same — update runner uses its own copy of the set          |
+| `src/cli/update-cli/shared.ts`   | Added `@starfoundrystudio/tyclaw` to `CORE_PACKAGE_NAMES`                            | Same — CLI update logic uses its own copy of the set       |
+| `src/commands/onboard-config.ts` | Changed onboarding default `tools.profile` from `"messaging"` to `"full"`            | New local installs in `tyclaw` start with full tool access |
 
 ## Files added (no upstream conflict)
 
