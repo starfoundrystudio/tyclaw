@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 type PackageJson = {
   name?: string;
@@ -100,7 +101,19 @@ export function syncPluginVersions(rootDir = resolve(".")) {
   };
 }
 
-if (import.meta.main) {
+function isDirectExecution() {
+  const argvEntry = process.argv[1];
+  if (!argvEntry) {
+    return false;
+  }
+  try {
+    return resolve(argvEntry) === fileURLToPath(import.meta.url);
+  } catch {
+    return false;
+  }
+}
+
+if (import.meta.main || isDirectExecution()) {
   const summary = syncPluginVersions();
   console.log(
     `Synced plugin versions to ${summary.targetVersion}. Updated: ${summary.updated.length}. Changelogged: ${summary.changelogged.length}. Stripped workspace devDeps: ${summary.strippedWorkspaceDevDeps.length}. Skipped: ${summary.skipped.length}.`,
