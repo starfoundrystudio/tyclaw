@@ -3,7 +3,7 @@ name: Publish to GitHub Packages
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   publish:
@@ -20,8 +20,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@starfoundrystudio'
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@starfoundrystudio"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

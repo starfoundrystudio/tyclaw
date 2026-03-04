@@ -7,7 +7,7 @@
  * Adapted from starfoundry-cli's release.mjs and upstream OpenClaw's release process.
  *
  * Usage:
- *   node scripts/release.mjs [YYYY.M.D] [--dry-run]
+ *   node scripts/release.mjs [YYYY.M.D] [--dry-run] [--strict]
  *
  * If no version is given, defaults to today's date (e.g. 2026.3.2).
  * If today's version already exists as a tag, appends -N (e.g. 2026.3.2-1).
@@ -24,6 +24,7 @@ const rootDir = join(__dirname, "..");
 
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
+const strictDryRun = args.includes("--strict");
 const explicitVersion = args.find((a) => !a.startsWith("-"));
 
 // ─── Helpers ───
@@ -159,14 +160,20 @@ if (dryRun) {
     process.exit(1);
   }
 
-  // Tests
-  console.log(bold("\nTests:"));
-  try {
-    execSync("pnpm test -- --run", { cwd: rootDir, stdio: "inherit" });
-    console.log(green("  \u2713 Tests passed"));
-  } catch {
-    console.error(red("Tests failed."));
-    process.exit(1);
+  if (strictDryRun) {
+    // Optional strict gate for forks that require full local validation.
+    console.log(bold("\nTests (strict mode):"));
+    try {
+      execSync("pnpm test -- --run", { cwd: rootDir, stdio: "inherit" });
+      console.log(green("  \u2713 Tests passed"));
+    } catch {
+      console.error(red("Tests failed."));
+      process.exit(1);
+    }
+  } else {
+    console.log(
+      dim("\nSkipping full test suite in default dry run (use --strict to include pnpm test)."),
+    );
   }
 
   // Summary

@@ -132,6 +132,7 @@
     "release": "node scripts/release.mjs",
     "release:check": "node --import tsx scripts/release-check.ts",
     "release:dry-run": "node scripts/release.mjs --dry-run",
+    "release:dry-run:strict": "node scripts/release.mjs --dry-run --strict",
     "start": "node scripts/run-node.mjs",
     "test": "node scripts/test-parallel.mjs",
     "test:all": "pnpm lint && pnpm build && pnpm test && pnpm test:e2e && pnpm test:live && pnpm test:docker:all",
