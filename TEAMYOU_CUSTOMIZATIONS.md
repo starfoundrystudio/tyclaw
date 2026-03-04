@@ -32,6 +32,7 @@ Merge checklist: when syncing upstream, review any file listed here carefully.
 
 - `git rerere` is enabled — conflict resolutions are remembered automatically.
 - Default release sync source is `upstream-stable`, which should advance only to upstream stable tags.
+- Upstream release tags are mirrored locally as namespaced tags under `upstream/v...`; never use plain local `v...` tags as upstream references.
 - `upstream-main` is optional and should be treated as an inspection-only mirror of upstream dev head.
 - `package.json` will conflict on nearly every upstream sync (version bumps). Resolution is always: keep our identity fields (`name`, `repository`, `homepage`, `bugs`, `author`, `publishConfig`), take their functional changes (version, scripts, deps).
 - Last synced: (not yet synced)

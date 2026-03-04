@@ -110,12 +110,17 @@ We use three branch roles:
 - `upstream-stable`: safe upstream intake branch, advanced only to upstream **stable release tags**
 - `upstream-main`: optional mirror of upstream `main` for inspection only, not the default release source
 
+Important: upstream and this fork both create release tags like `v2026.3.2`. Plain local tag names are therefore ambiguous and unsafe for upstream syncing. We keep **namespaced upstream tags** locally under `upstream/v...` and only use those for `upstream-stable`.
+Stable upstream tags may be either plain release tags (`vYYYY.M.D`) or stable patch tags (`vYYYY.M.D-1`, `vYYYY.M.D-2`). Only `beta` tags are excluded from the stable intake flow.
+
 ### Initial setup (already done)
 
 ```bash
 git remote add upstream git@github.com:openclaw/openclaw.git
-git fetch upstream --tags
-git checkout -b upstream-stable vYYYY.M.D
+git config remote.upstream.tagOpt --no-tags
+git config --add remote.upstream.fetch '+refs/tags/*:refs/tags/upstream/*'
+git fetch upstream --prune
+git checkout -b upstream-stable refs/tags/upstream/vYYYY.M.D
 git checkout -b upstream-main upstream/main   # optional: dev-head mirror for inspection only
 git config rerere.enabled true   # remember conflict resolutions
 git checkout main
@@ -124,26 +129,28 @@ git checkout main
 ### Syncing upstream changes for releases
 
 ```bash
-# 1. Fetch upstream tags and choose the latest stable release tag
-git fetch upstream --tags
-git tag -l 'v*' --sort=-version:refname | grep -Ev 'beta|-[0-9]+$' | head -n 20
+# 1. Fetch upstream refs safely (branches + namespaced upstream tags)
+scripts/upstream-stable.sh fetch
 
-# 2. Move upstream-stable to the chosen upstream stable tag
-git branch -f upstream-stable vYYYY.M.D
+# 2. Inspect available upstream stable tags
+scripts/upstream-stable.sh list
 
-# 3. Review what changed relative to our shipping branch
+# 3. Move upstream-stable to the chosen upstream stable tag
+scripts/upstream-stable.sh set vYYYY.M.D
+
+# 4. Review what changed relative to our shipping branch
 git log main..upstream-stable --oneline
 
-# 4a. Merge the stable intake branch (preferred for normal release syncs)
+# 5a. Merge the stable intake branch (preferred for normal release syncs)
 git checkout main
 git merge upstream-stable --no-commit
 # resolve any conflicts in TEAMYOU-marked blocks, then commit
 
-# 4b. Or cherry-pick specific commits from upstream-stable when you want tighter control
+# 5b. Or cherry-pick specific commits from upstream-stable when you want tighter control
 git checkout main
 git cherry-pick <commit-hash>
 
-# 5. Verify
+# 6. Verify
 pnpm install && pnpm build && pnpm test
 ```
 
@@ -163,6 +170,7 @@ Do **not** use `upstream-main` as the default source for `tyclaw` releases. Only
 ### Rules of thumb
 
 - **Release from stable tags** — treat `upstream-stable` as the default source for `tyclaw` release syncs.
+- **Never use plain local `v...` tags as upstream references** — use namespaced upstream tags (`upstream/v...`) only.
 - **Use `upstream-main` only for inspection or emergency cherry-picks** — it tracks upstream dev head and may be temporarily red.
 - **Never commit TeamYou changes to `upstream-stable` or `upstream-main`** — keep both as clean upstream references.
 - **Merge or cherry-pick from `upstream-stable` into `main`** — use `upstream-main` only when you deliberately need unreleased upstream code.
