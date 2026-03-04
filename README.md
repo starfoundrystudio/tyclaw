@@ -102,46 +102,71 @@ Details: [Development channels](https://docs.openclaw.ai/install/development-cha
 
 ## TeamYou fork — syncing with upstream
 
-This repo is a fork of [OpenClaw](https://github.com/openclaw/openclaw) customized for the TeamYou application. We maintain an `upstream-main` branch as a pristine mirror of the upstream repo, and do all TeamYou-specific work on `main`.
+This repo is a fork of [OpenClaw](https://github.com/openclaw/openclaw) customized for the TeamYou application.
+
+We use three branch roles:
+
+- `main`: TeamYou shipping branch
+- `upstream-stable`: safe upstream intake branch, advanced only to upstream **stable release tags**
+- `upstream-main`: optional mirror of upstream `main` for inspection only, not the default release source
 
 ### Initial setup (already done)
 
 ```bash
 git remote add upstream git@github.com:openclaw/openclaw.git
-git fetch upstream
-git checkout -b upstream-main upstream/main
+git fetch upstream --tags
+git checkout -b upstream-stable vYYYY.M.D
+git checkout -b upstream-main upstream/main   # optional: dev-head mirror for inspection only
 git config rerere.enabled true   # remember conflict resolutions
 git checkout main
 ```
 
-### Syncing upstream changes
+### Syncing upstream changes for releases
 
 ```bash
-# 1. Update the pristine mirror
-git fetch upstream
-git checkout upstream-main
-git merge --ff-only upstream/main
+# 1. Fetch upstream tags and choose the latest stable release tag
+git fetch upstream --tags
+git tag -l 'v*' --sort=-version:refname | grep -Ev 'beta|-[0-9]+$' | head -n 20
 
-# 2. Review what changed
-git log main..upstream-main --oneline
+# 2. Move upstream-stable to the chosen upstream stable tag
+git branch -f upstream-stable vYYYY.M.D
 
-# 3a. Cherry-pick specific commits (preferred for targeted updates)
+# 3. Review what changed relative to our shipping branch
+git log main..upstream-stable --oneline
+
+# 4a. Merge the stable intake branch (preferred for normal release syncs)
+git checkout main
+git merge upstream-stable --no-commit
+# resolve any conflicts in TEAMYOU-marked blocks, then commit
+
+# 4b. Or cherry-pick specific commits from upstream-stable when you want tighter control
 git checkout main
 git cherry-pick <commit-hash>
 
-# 3b. Or selective merge for larger batches
-git checkout main
-git merge upstream-main --no-commit   # inspect before committing
-# resolve any conflicts in TEAMYOU-marked blocks, then commit
-
-# 4. Verify
+# 5. Verify
 pnpm install && pnpm build && pnpm test
 ```
 
+### Optional: inspecting unreleased upstream dev code
+
+If you want to look at unreleased upstream work, keep `upstream-main` as a read-only mirror of upstream `main`:
+
+```bash
+git fetch upstream
+git checkout upstream-main
+git merge --ff-only upstream/main
+git checkout main
+```
+
+Do **not** use `upstream-main` as the default source for `tyclaw` releases. Only cherry-pick from it when you intentionally want a post-release upstream fix.
+
 ### Rules of thumb
 
-- **Never commit TeamYou changes to `upstream-main`** — keep it a clean mirror.
-- **Cherry-pick over wholesale merge** — gives you control over what comes in and when.
+- **Release from stable tags** — treat `upstream-stable` as the default source for `tyclaw` release syncs.
+- **Use `upstream-main` only for inspection or emergency cherry-picks** — it tracks upstream dev head and may be temporarily red.
+- **Never commit TeamYou changes to `upstream-stable` or `upstream-main`** — keep both as clean upstream references.
+- **Merge or cherry-pick from `upstream-stable` into `main`** — use `upstream-main` only when you deliberately need unreleased upstream code.
+- **Cherry-pick over wholesale merge** when pulling isolated fixes from `upstream-main`.
 - **`git rerere` is enabled** — Git remembers how you resolved conflicts and auto-applies the same resolution next time.
 - **Check `TEAMYOU_CUSTOMIZATIONS.md`** — lists every upstream file we've modified. When upstream touches a file in that list, review carefully.
 
@@ -159,6 +184,23 @@ pnpm release 2026.3.15    # explicit version
 ```
 
 Pushing a `v*` tag triggers the [publish workflow](.github/workflows/publish.yml), which builds and publishes to GitHub Packages automatically.
+
+### Bundled TeamYou skill
+
+`tyclaw` ships a bundled baseline copy of the TeamYou skill in `skills/teamyou/`.
+That bundled copy is vendored from the separate TeamYou repo and refreshed with:
+
+```bash
+node --import tsx scripts/sync-teamyou-skill.ts
+```
+
+Two versions matter:
+
+- **Shipped version**: the TeamYou skill version bundled into this `tyclaw` release
+- **Active version**: the highest-precedence TeamYou skill on the machine
+
+OpenClaw skill precedence is unchanged, so a newer TeamYou install in `~/.openclaw/skills/teamyou`
+or `<workspace>/skills/teamyou` overrides the bundled copy automatically.
 
 ## From source (development)
 

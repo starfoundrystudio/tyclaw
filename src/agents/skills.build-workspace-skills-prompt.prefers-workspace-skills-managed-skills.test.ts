@@ -55,6 +55,69 @@ describe("buildWorkspaceSkillsPrompt", () => {
     expect(prompt).not.toContain("Managed version");
     expect(prompt).not.toContain("Bundled version");
   });
+  it("prefers managed TeamYou over bundled TeamYou when no workspace override exists", async () => {
+    const workspaceDir = await fixtureSuite.createCaseDir("workspace");
+    const managedDir = path.join(workspaceDir, ".managed");
+    const bundledDir = path.join(workspaceDir, ".bundled");
+
+    await writeSkill({
+      dir: path.join(bundledDir, "teamyou"),
+      name: "teamyou",
+      description: "Bundled TeamYou",
+      body: "# Bundled\n",
+    });
+    await writeSkill({
+      dir: path.join(managedDir, "teamyou"),
+      name: "teamyou",
+      description: "Managed TeamYou",
+      body: "# Managed\n",
+    });
+
+    const prompt = withEnv({ HOME: workspaceDir, PATH: "" }, () =>
+      buildWorkspaceSkillsPrompt(workspaceDir, {
+        managedSkillsDir: managedDir,
+        bundledSkillsDir: bundledDir,
+      }),
+    );
+
+    expect(prompt).toContain("Managed TeamYou");
+    expect(prompt).not.toContain("Bundled TeamYou");
+  });
+  it("prefers workspace TeamYou over managed and bundled TeamYou", async () => {
+    const workspaceDir = await fixtureSuite.createCaseDir("workspace");
+    const managedDir = path.join(workspaceDir, ".managed");
+    const bundledDir = path.join(workspaceDir, ".bundled");
+
+    await writeSkill({
+      dir: path.join(bundledDir, "teamyou"),
+      name: "teamyou",
+      description: "Bundled TeamYou",
+      body: "# Bundled\n",
+    });
+    await writeSkill({
+      dir: path.join(managedDir, "teamyou"),
+      name: "teamyou",
+      description: "Managed TeamYou",
+      body: "# Managed\n",
+    });
+    await writeSkill({
+      dir: path.join(workspaceDir, "skills", "teamyou"),
+      name: "teamyou",
+      description: "Workspace TeamYou",
+      body: "# Workspace\n",
+    });
+
+    const prompt = withEnv({ HOME: workspaceDir, PATH: "" }, () =>
+      buildWorkspaceSkillsPrompt(workspaceDir, {
+        managedSkillsDir: managedDir,
+        bundledSkillsDir: bundledDir,
+      }),
+    );
+
+    expect(prompt).toContain("Workspace TeamYou");
+    expect(prompt).not.toContain("Managed TeamYou");
+    expect(prompt).not.toContain("Bundled TeamYou");
+  });
   it("gates by bins, config, and always", async () => {
     const workspaceDir = await fixtureSuite.createCaseDir("workspace");
     const skillsDir = path.join(workspaceDir, "skills");

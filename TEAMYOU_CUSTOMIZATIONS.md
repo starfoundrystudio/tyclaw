@@ -14,11 +14,13 @@ Merge checklist: when syncing upstream, review any file listed here carefully.
 
 ## Files added (no upstream conflict)
 
-| File                            | Purpose                                      |
-| ------------------------------- | -------------------------------------------- |
-| `.github/workflows/publish.yml` | Auto-publish to GitHub Packages on `v*` tags |
-| `scripts/release.mjs`           | Calver release script (bump, tag, push)      |
-| `TEAMYOU_CUSTOMIZATIONS.md`     | This file                                    |
+| File                            | Purpose                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------ |
+| `.github/workflows/publish.yml` | Auto-publish to GitHub Packages on `v*` tags                             |
+| `scripts/release.mjs`           | Calver release script (bump, tag, push)                                  |
+| `scripts/sync-teamyou-skill.ts` | Refresh vendored `skills/teamyou/` from TeamYou                          |
+| `skills/teamyou/**`             | Bundled TeamYou baseline skill, vendored from `../teamyou/teamyou-skill` |
+| `TEAMYOU_CUSTOMIZATIONS.md`     | This file                                                                |
 
 ## Config changes (not in git)
 
@@ -29,5 +31,7 @@ Merge checklist: when syncing upstream, review any file listed here carefully.
 ## Upstream sync notes
 
 - `git rerere` is enabled — conflict resolutions are remembered automatically.
+- Default release sync source is `upstream-stable`, which should advance only to upstream stable tags.
+- `upstream-main` is optional and should be treated as an inspection-only mirror of upstream dev head.
 - `package.json` will conflict on nearly every upstream sync (version bumps). Resolution is always: keep our identity fields (`name`, `repository`, `homepage`, `bugs`, `author`, `publishConfig`), take their functional changes (version, scripts, deps).
 - Last synced: (not yet synced)
