@@ -222,7 +222,17 @@ rl.question(`Release ${pkg.name} v${currentVersion} \u2192 v${newVersion}? (Y/n)
     process.exit(1);
   }
 
-  // 3. Commit and tag
+  // 3. Validate release integrity before committing/tagging
+  try {
+    console.log("Running release check...");
+    execSync("pnpm release:check", { cwd: rootDir, stdio: "inherit" });
+    console.log(green("  \u2713 Release check passed"));
+  } catch (err) {
+    console.error(red("Release check failed:"), err.message);
+    process.exit(1);
+  }
+
+  // 4. Commit and tag
   try {
     execSync("git add package.json extensions/", { cwd: rootDir });
     execSync(`git commit -m "${newVersion}"`, { cwd: rootDir, stdio: "inherit" });
@@ -233,7 +243,7 @@ rl.question(`Release ${pkg.name} v${currentVersion} \u2192 v${newVersion}? (Y/n)
     process.exit(1);
   }
 
-  // 4. Push
+  // 5. Push
   try {
     execSync("git push && git push --tags", { cwd: rootDir, stdio: "inherit" });
   } catch (err) {
