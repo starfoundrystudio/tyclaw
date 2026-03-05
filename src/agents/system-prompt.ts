@@ -7,6 +7,7 @@ import type { ResolvedTimeFormat } from "./date-time.js";
 import type { EmbeddedContextFile } from "./pi-embedded-helpers.js";
 import type { EmbeddedSandboxInfo } from "./pi-embedded-runner/types.js";
 import { sanitizeForPromptLiteral } from "./sanitize-for-prompt.js";
+import { buildTeamYouSchedulingPolicySection } from "./system-prompt-teamyou.js";
 
 /**
  * Controls which hardcoded sections are included in the system prompt.
@@ -456,6 +457,9 @@ export function buildAgentSystemPrompt(params: {
       : []),
     "Do not poll `subagents list` / `sessions_list` in a loop; only check status on-demand (for intervention, debugging, or when explicitly asked).",
     "",
+    // TEAMYOU_FORK_START: keep TeamYou policy block isolated to reduce merge conflicts.
+    ...buildTeamYouSchedulingPolicySection(),
+    // TEAMYOU_FORK_END
     "## Tool Call Style",
     "Default: do not narrate routine, low-risk tool calls (just call the tool).",
     "Narrate only when it helps: multi-step work, complex/challenging problems, sensitive actions (e.g., deletions), or when the user explicitly asks.",

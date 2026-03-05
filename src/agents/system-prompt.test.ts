@@ -237,6 +237,16 @@ describe("buildAgentSystemPrompt", () => {
     expect(prompt).toContain("sessions_send");
   });
 
+  it("includes TeamYou scheduling policy section", () => {
+    const prompt = buildAgentSystemPrompt({
+      workspaceDir: "/tmp/openclaw",
+    });
+
+    expect(prompt).toContain("## TeamYou Scheduling Policy");
+    expect(prompt).toContain("scheduled-actions-create");
+    expect(prompt).toContain("heartbeat-actions-create");
+  });
+
   it("documents ACP sessions_spawn agent targeting requirements", () => {
     const prompt = buildAgentSystemPrompt({
       workspaceDir: "/tmp/openclaw",
