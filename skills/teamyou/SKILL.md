@@ -267,7 +267,7 @@ The API returns rate limit headers:
 For operations not covered by the script, use curl with Bearer token:
 
 ```bash
-curl https://app.teamyou.ai/api/external/v1/topics \
+curl https://www.teamyou.com/api/external/v1/topics \
   -H "Authorization: Bearer ty_your_api_key" \
   -H "Content-Type: application/json"
 ```

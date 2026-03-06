@@ -4,7 +4,7 @@
 
 set -e
 
-BASE_URL="${TEAMYOU_API_URL:-https://teamyou.com/api/external/v1}"
+BASE_URL="${TEAMYOU_API_URL:-https://www.teamyou.com/api/external/v1}"
 SUPPORTED_ACTION_TYPES=("check_todos" "openclaw_command" "custom_webhook")
 
 # Get API key from environment or ~/.teamyou_key
@@ -723,7 +723,7 @@ Scheduled Actions:
 
 Environment:
   TEAMYOU_API_KEY  - API key (or create ~/.teamyou_key)
-  TEAMYOU_API_URL  - API base URL (default: https://teamyou.com/api/external/v1)
+  TEAMYOU_API_URL  - API base URL (default: https://www.teamyou.com/api/external/v1)
 
 Examples:
   teamyou.sh topics-list

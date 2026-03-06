@@ -2,7 +2,7 @@
   "name": "teamyou",
   "version": "1.1.0",
   "min_codex_version": "1.0.0",
-  "payload_sha256": "2b367abaffbc7e0fc365d16ed94bc5d1ce8e608ac76728838c7c93a2452669bc",
-  "source_git_commit": "773551876f1a16868079a6dc14efd823d95482e3",
+  "payload_sha256": "be5c62c1f3435015e23e6a169c23bef75b16b4b16331c934cb11457121f7787e",
+  "source_git_commit": "50fe7f1adea21d71284b8d9c2f6e6cf7e572aa31",
   "source_type": "teamyou-source"
 }
